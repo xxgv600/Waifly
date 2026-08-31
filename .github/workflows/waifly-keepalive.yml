@@ -1,0 +1,31 @@
+name: Waifly Account Keepalive
+
+on:
+  schedule:
+    # UTC 20:00 = 北京时间 04:00
+    # 每周一、周四各跑一次,15天窗口内留足余量;即使某次失败也还有机会
+    - cron: '0 20 * * 1,4'
+  workflow_dispatch: {}    # 允许在 Actions 页面手动触发
+
+concurrency:
+  group: waifly-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run keepalive
+        env:
+          WAIFLY_EMAIL: ${{ secrets.WAIFLY_EMAIL }}
+          WAIFLY_PASSWORD: ${{ secrets.WAIFLY_PASSWORD }}
+        run: python3 waifly_keepalive.py
