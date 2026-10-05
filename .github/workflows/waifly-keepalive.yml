@@ -5,7 +5,7 @@ on:
     # UTC 20:00 = 北京时间 04:00
     # 每周一、周四各跑一次,15天窗口内留足余量;即使某次失败也还有机会
     - cron: '0 20 * * 1,4'
-  workflow_dispatch: {}    # 允许在 Actions 页面手动触发
+  workflow_dispatch: {}
 
 concurrency:
   group: waifly-keepalive
@@ -14,7 +14,7 @@ concurrency:
 jobs:
   keepalive:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,12 +24,14 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: 安装依赖
+        run: pip install requests seleniumbase
+
       - name: Run keepalive
         env:
-          WAIFLY_EMAIL: ${{ secrets.WAIFLY_EMAIL }}
-          WAIFLY_PASSWORD: ${{ secrets.WAIFLY_PASSWORD }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-        run: python3 waifly_keepalive.py
-        # 失败也继续通知(失败分支在脚本内已发送TG),所以不加 continue-on-error,
-        # 保持非零退出码以便 GitHub 显示红色失败、触发邮件告警
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          HEADLESS: "true"
+        run: python3 waifly_keepalive_discord.py
